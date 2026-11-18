@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f3ec">
+  <title>Бинго Потапыча</title>
+  <script src="config.js"></script>
+  <style>
+    :root{color-scheme:light;--ink:#20221f;--green:#285d45;--muted:#85867d;--paper:#fffefa;--line:#e7e5dc;--orange:#f47750}
+    *{box-sizing:border-box}body{margin:0;background:#f6f3ec;color:var(--ink);font-family:Arial,Helvetica,sans-serif}.page{max-width:980px;margin:auto;padding:0 28px}.top{height:76px;border-bottom:1px solid #deddd4;display:flex;align-items:center;justify-content:space-between}.brand{font-size:19px;font-weight:800;letter-spacing:-.5px}.brand b{display:inline-grid;place-items:center;width:28px;height:28px;margin-right:8px;border-radius:8px;background:var(--green);color:white}.shared{font-size:12px;color:var(--muted)}
+    header{padding:52px 0 34px}.kicker{font-size:10px;font-weight:bold;letter-spacing:1.7px;color:var(--green)}h1{font-size:clamp(42px,7vw,66px);line-height:.98;letter-spacing:-3px;margin:14px 0}h1 span{color:var(--green)}.hint{font-size:14px;color:var(--muted)}
+    .board{padding:26px;background:var(--paper);border:1px solid var(--line);border-radius:15px;box-shadow:0 12px 40px #322c1610}.board-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.board-head h2{font-size:22px;margin:5px 0}.small{font-size:10px;font-weight:bold;letter-spacing:1.5px;color:#99998e}.actions{display:flex;gap:8px}button{font:inherit}.control{padding:9px 12px;background:white;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:12px}.control:hover{border-color:var(--green)}.status{font-size:12px;color:var(--muted);margin:10px 0 17px}.matrix{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}.cell{min-height:96px;padding:12px 10px;display:flex;align-items:center;justify-content:center;text-align:center;background:#fffefa;border:1px solid var(--line);border-radius:9px;color:#454840;font-size:13px;line-height:1.4;cursor:pointer}.cell:hover{border-color:#92a996}.cell.checked{background:#eaf1e8;border-color:#abc3ad;color:#254832}.cell.checked:before{content:'✓';position:absolute;transform:translate(38px,-29px);display:grid;place-items:center;width:18px;height:18px;background:var(--green);border-radius:50%;color:white;font-size:11px}.cell.free{background:#f5eddb;border-color:#ead9ae;color:#795d27;cursor:default;font-weight:bold}.foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #eeede7;margin-top:17px;padding-top:15px;color:var(--muted);font-size:12px}.foot strong{color:var(--ink)}.archive{margin-top:12px;border-top:1px solid var(--line);padding-top:14px}.archive[hidden]{display:none}.archive-title{font-weight:bold;margin-bottom:9px}.archive-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0efe9;font-size:13px}.archive-item button{padding:6px 9px}.empty{color:var(--muted);font-size:13px;padding:10px 0}footer{display:flex;justify-content:space-between;padding:24px 2px 32px;color:#999990;font-size:10px}.heart{color:var(--orange)}
+    @media(max-width:600px){.page{padding:0 16px}.board{padding:17px 13px}.matrix{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.cell{min-height:88px;padding:9px 6px;font-size:12px}.cell.checked:before{transform:translate(31px,-27px)}header{padding-top:40px}.board-head h2{font-size:19px}.shared{font-size:10px}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="top"><div class="brand"><b>П</b>потапыч.</div><div class="shared">Бинго на пару</div></div>
+    <header><div class="kicker">ЛЕКЦИОННОЕ БИНГО</div><h1>Отмечай<br><span>фразы.</span></h1><div class="hint">Услышал на паре — нажми на клетку.</div></header>
+    <section class="board">
+      <div class="board-head"><div><div class="small">ТЕКУЩЕЕ БИНГО</div><h2 id="round-title"></h2></div><div class="actions"><button class="control" id="archive-toggle">Архив</button></div></div>
+      <div class="status" id="status"></div>
+      <div class="matrix" id="matrix"></div>
+      <div class="foot"><span>✓ <strong id="count">0</strong> клеток отмечено</span><button class="control" id="clear">Сбросить</button></div>
+      <div class="archive" id="archive" hidden><div class="archive-title">Прошлые бинго</div><div id="archive-items"></div></div>
+    </section>
+    <footer><span>Сделано между парами <span class="heart">♥</span></span><span>ПОТАПЫЧ × БИНГО</span></footer>
+  </main>
+  <script>
+    // Меняйте фразы в этом списке. Они сразу отображаются в матрице ниже.
+    const defaultPhrases = [
+      'Как я уже говорил', 'Это будет на экзамене', 'Откройте конспекты', 'Запишите это', 'Вернёмся к этому позже',
+      'Вопросы есть?', 'Это важно', 'Посмотрите на доску', 'В наше время', 'Кто-нибудь ответит?',
+      'Тут всё просто', 'Я вам это уже объяснял', 'СВОЯ ФРАЗА 13', 'СВОЯ ФРАЗА 14', 'СВОЯ ФРАЗА 15',
+      'СВОЯ ФРАЗА 16', 'СВОЯ ФРАЗА 17', 'СВОЯ ФРАЗА 18', 'СВОЯ ФРАЗА 19', 'СВОЯ ФРАЗА 20',
+      'СВОЯ ФРАЗА 21', 'СВОЯ ФРАЗА 22', 'СВОЯ ФРАЗА 23', 'СВОЯ ФРАЗА 24'
+    ];
+    const config = window.BINGO_CONFIG || {};
+    const phrases = Array.isArray(config.phrases) && config.phrases.length ? config.phrases : defaultPhrases;
+    const intervalDays = Number(config.intervalDays) || 7;
+    const storageKey = 'potapych-bingo-html-v1';
+    const read = () => { try { return JSON.parse(localStorage.getItem(storageKey)) || {}; } catch { return {}; } };
+    let saved = read();
+    let remoteEnabled = Boolean(config.supabaseUrl && config.supabaseAnonKey);
+    async function loadShared() {
+      if (!remoteEnabled) return;
+      try {
+        const response = await fetch(`${config.supabaseUrl}/rest/v1/bingo_state?id=eq.main&select=data`, {headers:{apikey:config.supabaseAnonKey,Authorization:`Bearer ${config.supabaseAnonKey}`}});
+        if (!response.ok) throw new Error('Не удалось загрузить общую доску');
+        const rows = await response.json();
+        if (rows[0]?.data) saved = rows[0].data;
+        saved[currentKey] ||= [];
+        localStorage.setItem(storageKey, JSON.stringify(saved));
+        render();
+        document.getElementById('status').textContent='Общая доска синхронизирована';
+      } catch (error) {
+        remoteEnabled = false;
+        document.getElementById('status').textContent='Нет связи с общей доской. Отметки пока сохраняются в этом браузере.';
+      }
+    }
+    async function persist() {
+      localStorage.setItem(storageKey, JSON.stringify(saved));
+      if (!remoteEnabled) return;
+      try {
+        const response = await fetch(`${config.supabaseUrl}/rest/v1/bingo_state?on_conflict=id`, {method:'POST',headers:{apikey:config.supabaseAnonKey,Authorization:`Bearer ${config.supabaseAnonKey}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:'main',data:saved,updated_at:new Date().toISOString()})});
+        if (!response.ok) throw new Error('Не удалось сохранить общую доску');
+        document.getElementById('status').textContent='Общая доска синхронизирована';
+      } catch { document.getElementById('status').textContent='Ошибка синхронизации. Проверьте подключение.'; }
+    }
+    const dateKey = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const startDate = new Date(2024,0,1);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const elapsed = Math.floor((today-startDate)/86400000);
+    const roundDate = new Date(startDate); roundDate.setDate(roundDate.getDate()+Math.floor(elapsed/intervalDays)*intervalDays);
+    const currentKey = dateKey(roundDate);
+    const label = key => new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',year:'numeric'}).format(new Date(key+'T12:00:00'));
+    saved[currentKey] ||= [];
+    let shownKey = currentKey;
+    const matrix = document.getElementById('matrix');
+    function render(key=currentKey, readOnly=false) {
+      shownKey=key; document.getElementById('round-title').textContent=label(key);
+      document.getElementById('status').textContent=readOnly?'Просмотр архива':(remoteEnabled?'Общая доска · изменения сохраняются автоматически':'Локальный режим · настройте Supabase для общего доступа');
+      matrix.replaceChildren(); const marks=saved[key]||[]; const center=Math.floor(phrases.length/2);
+      phrases.forEach((phrase,index)=>{const free=index===center;const cell=document.createElement('button');cell.className='cell'+((free||marks.includes(index))?' checked':'')+(free?' free':'');cell.textContent=free?'✳ Свободная клетка':phrase;cell.disabled=free||readOnly;cell.addEventListener('click',()=>{saved[key]||=[];saved[key]=saved[key].includes(index)?saved[key].filter(x=>x!==index):[...saved[key],index];render(key,readOnly);persist();});matrix.append(cell);});
+      document.getElementById('count').textContent=marks.length;
+      document.getElementById('clear').hidden=readOnly;
+    }
+    function renderArchive(){const box=document.getElementById('archive-items');box.replaceChildren();const keys=Object.keys(saved).filter(k=>k!==currentKey).sort().reverse();if(!keys.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='Архивных бинго пока нет.';box.append(empty);return;}keys.forEach(key=>{const row=document.createElement('div');row.className='archive-item';const name=document.createElement('span');name.textContent=label(key);const open=document.createElement('button');open.className='control';open.textContent='Открыть';open.onclick=()=>render(key,true);row.append(name,open);box.append(row);});}
+    document.getElementById('archive-toggle').onclick=()=>{const box=document.getElementById('archive');box.hidden=!box.hidden;if(!box.hidden)renderArchive();};
+    document.getElementById('clear').onclick=()=>{saved[currentKey]=[];localStorage.setItem(storageKey,JSON.stringify(saved));render();};
+    render(); loadShared();
+  </script>
+</body>
+</html>
