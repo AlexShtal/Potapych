@@ -81,8 +81,8 @@
     function render(key=currentKey, readOnly=false) {
       shownKey=key; document.getElementById('round-title').textContent=label(key);
       document.getElementById('status').textContent=readOnly?'Просмотр архива':(remoteEnabled?'Общая доска · изменения сохраняются автоматически':'Локальный режим · настройте Supabase для общего доступа');
-      matrix.replaceChildren(); const marks=saved[key]||[]; const center=Math.floor(phrases.length/2);
-      phrases.forEach((phrase,index)=>{const free=index===center;const cell=document.createElement('button');cell.className='cell'+((free||marks.includes(index))?' checked':'')+(free?' free':'');cell.textContent=free?'✳ Свободная клетка':phrase;cell.disabled=free||readOnly;cell.addEventListener('click',()=>{saved[key]||=[];saved[key]=saved[key].includes(index)?saved[key].filter(x=>x!==index):[...saved[key],index];render(key,readOnly);persist();});matrix.append(cell);});
+      matrix.replaceChildren(); const marks=saved[key]||[];
+      phrases.forEach((phrase,index)=>{const cell=document.createElement('button');cell.className='cell'+(marks.includes(index)?' checked':'');cell.textContent=phrase;cell.disabled=readOnly;cell.addEventListener('click',()=>{saved[key]||=[];saved[key]=saved[key].includes(index)?saved[key].filter(x=>x!==index):[...saved[key],index];render(key,readOnly);persist();});matrix.append(cell);});
       document.getElementById('count').textContent=marks.length;
       document.getElementById('clear').hidden=readOnly;
     }
